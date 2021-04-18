@@ -1,13 +1,17 @@
-#!/usr/bin/env python3
-
 import torch
-import numpy as np
 
-shape = (2, 3,)
-rand_tensor = torch.rand(shape)
-ones_tensor = torch.ones(shape)
-zeros_tensor = torch.zeros(shape)
+if __name__ == '__main__':
+    cuda_available = torch.cuda.is_available()
+    cuda_device = torch.cuda.current_device()
 
-print(f"Random Tensor: \n {rand_tensor} \n")
-print(f"Ones Tensor: \n {ones_tensor} \n")
-print(f"Zeros Tensor: \n {zeros_tensor}")
+    if torch.cuda.is_available():
+        print(f'Torch is using CUDA.{cuda_device} device ')
+    else:
+        print('Torch is not capable to use any of CUDA devices')
+
+    number_of_cuda_devices = torch.cuda.device_count()
+
+    print(f"Number of CUDA devices: {number_of_cuda_devices}")
+
+    for i in range(number_of_cuda_devices):
+        print(torch.cuda.get_device_name(i))
