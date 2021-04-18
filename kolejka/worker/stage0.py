@@ -112,10 +112,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
                 volumes.append((stage2, os.path.join(WORKER_DIRECTORY, 'stage2.py'), 'ro'))
                 break
 
-        docker_cmd = 'docker'
-        if task.limits.gpus:
-            docker_cmd = 'nvidia-docker'
-        docker_call  = [ docker_cmd, 'run' ]
+        docker_call  = [ 'docker', 'run' ]
         docker_call += [ '--detach' ]
         docker_call += [ '--name', docker_task ]
         docker_call += [ '--entrypoint', os.path.join(WORKER_DIRECTORY, 'stage1.sh') ]
@@ -145,6 +142,8 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         if task.limits.network is not None:
             if not task.limits.network:
                 docker_call += [ '--network=none' ]
+        if task.limits.gpus is not None:
+            docker_call += [ '--runtime=nvidia', '--gpus', str(task.limits.gpus) ]
         docker_call += [ '--cap-add', 'SYS_NICE' ]
         if task.limits.pids is not None:
             docker_call += [ '--pids-limit', str(task.limits.pids) ]
