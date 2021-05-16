@@ -84,7 +84,3 @@ def foreman_auto_tags():
     tags.update(cpu_tags())
     tags.update(gpu_tags())
     return list(tags)
-
-
-if __name__ == '__main__':
-    print(foreman_auto_tags())
