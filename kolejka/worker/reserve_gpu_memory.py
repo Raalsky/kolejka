@@ -65,11 +65,11 @@ def main(desired_memory: int) -> None:
                     logging.error(f"An error occurred on GPU#{gpu.id}({str(gpu.name, 'utf-8')}): {e}")
                     exit(-1)
 
-    while True:
-        try:
-            pass
-        except KeyboardInterrupt:
-            exit()
+    # while True:
+    #     try:
+    #         pass
+    #     except KeyboardInterrupt:
+    #         exit()
 
 
 if __name__ == '__main__':
