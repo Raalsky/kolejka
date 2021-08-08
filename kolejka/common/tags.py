@@ -3,6 +3,8 @@
 import os
 import re
 import sys
+import gpustat
+from collections import Counter
 
 def parse_cpu_name(name):
     name = re.sub(r'@.*', '', name.lower())
@@ -61,7 +63,33 @@ def cpu_tags():
         tags.add('cpus:'+str(count))
     return tags
 
+def normalize_gpu_name(name: str) -> str:
+    print(name)
+    return '-'.join(name.lower().split(' ')[1:])
+
+def gpu_tags():
+    tags = set()
+    counts_per_model = Counter()
+
+    stats = gpustat.GPUStatCollection.new_query()
+
+    if len(stats) > 0:
+        tags.add('gpu:nvidia')
+        tags.add(f'gpus:{len(stats)}')
+
+    for gpu in stats.gpus:
+        counts_per_model[normalize_gpu_name(gpu.name)] += 1
+
+    for model_name, count in counts_per_model.items():
+        tags.add(f'gpu:{model_name}')
+
+        for single_count in range(1, count + 1):
+            tags.add(f'gpu:{model_name}:{single_count}')
+
+    return tags
+
 def foreman_auto_tags():
     tags = set()
     tags.update(cpu_tags())
+    tags.update(gpu_tags())
     return list(tags)
