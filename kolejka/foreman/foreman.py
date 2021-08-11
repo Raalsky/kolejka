@@ -107,6 +107,7 @@ def foreman():
     limits.time = config.time
     limits.network = config.network
     limits.gpus = config.gpus
+    limits.gpu_memory = config.gpu_memory
     client = KolejkaClient()
     while True:
         try:
@@ -122,6 +123,7 @@ def foreman():
                     processes = list()
                     cpus_offset = 0
                     gpus_offset = 0
+                    gpus_memory = {_id: 0 for _id in resources.gpus}
                     for task in tasks:
                         if len(processes) >= config.concurency:
                             break
@@ -136,6 +138,8 @@ def foreman():
                         if resources.gpus is not None and task.limits.gpus > resources.gpus:
                             ok = False
                         if resources.memory is not None and task.limits.memory > resources.memory:
+                            ok = False
+                        if resources.gpu_memory is not None and task.limits.gpu_memory > resources.gpu_memory:
                             ok = False
                         if resources.swap is not None and task.limits.swap > resources.swap:
                             ok = False
@@ -205,6 +209,7 @@ def config_parser(parser):
     parser.add_argument('--time', action=TimeAction, help='time limit')
     parser.add_argument('--network', type=bool, help='allow netowrking')
     parser.add_argument('--gpus', type=int, help='gpus limit')
+    parser.add_argument('--gpu-memory', type=MemoryAction, help='gpu memory limit')
     def execute(args):
         kolejka_config(args=args)
         foreman()

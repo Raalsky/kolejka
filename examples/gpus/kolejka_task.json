@@ -8,6 +8,7 @@
   ],
   "limits": {
     "gpus": 1,
+    "gpu_memory": "1G",
     "cpus": 1,
     "pids": 1,
     "memory": "64M",

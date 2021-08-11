@@ -272,6 +272,7 @@ def config_parser(parser):
     parser.add_argument('--time', action=TimeAction, help='time limit')
     parser.add_argument('--network', type=bool, help='allow netowrking')
     parser.add_argument('--gpus', type=int, help='gpus limit')
+    parser.add_argument('--gpu-memory', type=MemoryAction, help='gpu memory limit')
     def execute(args):
         kolejka_config(args=args)
         config = worker_config()
