@@ -63,6 +63,7 @@ def manage_images(pull, size, necessary_images, priority_images):
             subprocess.run(['docker', 'pull', image], check=True)
         docker_inspect_run = subprocess.run(['docker', 'image', 'inspect', '--format', '{{json .Size}}', image], stdout=subprocess.PIPE, check=True)
         image_size = int(json.loads(str(docker_inspect_run.stdout, 'utf-8')))
+        print(image_size, size)
         assert image_size <= size
 
 def foreman_single(temp_path, task):
