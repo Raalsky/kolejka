@@ -1,0 +1,14 @@
+{
+  "id": "gpus",
+  "image":  "nvcr.io/nvidia/pytorch:19.12-py3",
+  "requires": ["gpus:1"],
+  "files": {},
+  "args": [
+      "/usr/bin/nvidia-smi"
+  ],
+  "limits": {
+    "cpus": 1
+  },
+  "stderr": "console.txt",
+  "stdout": "console.txt"
+}
