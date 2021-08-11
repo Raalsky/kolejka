@@ -105,6 +105,7 @@ def foreman():
     limits.workspace = config.workspace
     limits.time = config.time
     limits.network = config.network
+    limits.gpus = config.gpus
     client = KolejkaClient()
     while True:
         try:
@@ -119,6 +120,7 @@ def foreman():
                     image_usage = dict()
                     processes = list()
                     cpus_offset = 0
+                    gpus_offset = 0
                     for task in tasks:
                         if len(processes) >= config.concurency:
                             break
@@ -126,8 +128,11 @@ def foreman():
                             break
                         task.limits.update(limits)
                         task.limits.cpus_offset = cpus_offset
+                        task.limits.gpus_offset = gpus_offset
                         ok = True
                         if resources.cpus is not None and task.limits.cpus > resources.cpus:
+                            ok = False
+                        if resources.gpus is not None and task.limits.gpus > resources.gpus:
                             ok = False
                         if resources.memory is not None and task.limits.memory > resources.memory:
                             ok = False
@@ -149,6 +154,9 @@ def foreman():
                             cpus_offset += task.limits.cpus
                             if resources.cpus is not None:
                                 resources.cpus -= task.limits.cpus
+                            gpus_offset += task.limits.gpus
+                            if resources.gpus is not None:
+                                resources.gpus -= task.limits.gpus
                             if resources.memory is not None:
                                 resources.memory -= task.limits.memory
                             if resources.swap is not None:
@@ -194,7 +202,8 @@ def config_parser(parser):
     parser.add_argument('--image', action=MemoryAction, help='image size limit')
     parser.add_argument('--workspace', action=MemoryAction, help='workspace size limit')
     parser.add_argument('--time', action=TimeAction, help='time limit')
-    parser.add_argument('--network',type=bool, help='allow netowrking')
+    parser.add_argument('--network', type=bool, help='allow netowrking')
+    parser.add_argument('--gpus', type=int, help='gpus limit')
     def execute(args):
         kolejka_config(args=args)
         foreman()
