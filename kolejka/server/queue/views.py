@@ -45,10 +45,10 @@ def dequeue(request):
             print('Breaked at exclusive')
             continue
         if not set(tt.requires).issubset(tags):
-            print('Breaked at tags')
+            print('Breaked at tags', tt.requires, tags)
             continue
         if resources.cpus is not None and (tt.limits.cpus is None or tt.limits.cpus > resources.cpus):
-            print('Breaked at cpus')
+            print('Breaked at cpus', resources.cpus, tt.limits.cpus)
             continue
         if resources.gpus is not None and (tt.limits.gpus is None or tt.limits.gpus > resources.gpus):
             print('Breaked at gpus')

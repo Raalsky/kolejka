@@ -89,6 +89,7 @@ def gpu_tags():
     return tags
 
 def foreman_auto_tags():
+    print('TTTT')
     tags = set()
     tags.update(cpu_tags())
     tags.update(gpu_tags())
