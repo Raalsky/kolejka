@@ -123,7 +123,7 @@ def foreman():
                     processes = list()
                     cpus_offset = 0
                     gpus_offset = 0
-                    gpus_memory = {_id: 0 for _id in resources.gpus}
+                    gpus_memory = {f'{gpu_id}': resources.gpu_memory for gpu_id in limits.gpus}
                     for task in tasks:
                         if len(processes) >= config.concurency:
                             break
@@ -135,12 +135,17 @@ def foreman():
                         ok = True
                         if resources.cpus is not None and task.limits.cpus > resources.cpus:
                             ok = False
-                        if resources.gpus is not None and task.limits.gpus > resources.gpus:
-                            ok = False
                         if resources.memory is not None and task.limits.memory > resources.memory:
                             ok = False
-                        if resources.gpu_memory is not None and task.limits.gpu_memory > resources.gpu_memory:
-                            ok = False
+                        if resources.gpus is not None:
+                            if task.limits.gpus > resources.gpus:
+                                ok = False
+                            if resources.gpu_memory is not None and task.limits.gpu_memory > resources.gpu_memory:
+                                ok = False
+                            else:
+                                for gpu_id in range(gpus_offset, gpus_offset + task.limits.gpus):
+                                    if task.limits.gpu_memory > gpus_memory[f'{gpu_id % limits.gpus}']:
+                                        ok = False
                         if resources.swap is not None and task.limits.swap > resources.swap:
                             ok = False
                         if resources.pids is not None and task.limits.pids > resources.pids:
@@ -161,6 +166,8 @@ def foreman():
                                 resources.cpus -= task.limits.cpus
                             gpus_offset += task.limits.gpus
                             if resources.gpus is not None:
+                                for gpu_id in range(gpus_offset, gpus_offset + task.limits.gpus):
+                                    gpus_memory[f'{gpu_id % limits.gpus}'] = 0
                                 resources.gpus -= task.limits.gpus
                             if resources.memory is not None:
                                 resources.memory -= task.limits.memory

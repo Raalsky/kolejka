@@ -179,6 +179,11 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         docker_call += [ os.path.join(WORKER_DIRECTORY, 'result') ]
         logging.debug('Docker call : {}'.format(docker_call))
 
+        docker_gpu_memory_reservation = ['docker', 'run', '--runtime=nvidia', '--rm', '-d', '-e', 'NVIDIA_VISIBLE_DEVICES=0', '--name', 'reserved_', 'gpu-memory-reservation:latest', '/opt/conda/bin/python', '/app/reserve_gpu_memory.py', '1024']
+        docker_cleanup.append([
+            'docker', 'stop', 'reserved_'
+        ])
+
         pull_image = config.pull
         if not pull_image:
             docker_inspect_run = subprocess.run(['docker', 'image', 'inspect', docker_image], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
