@@ -132,13 +132,14 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         if task.limits.gpus is not None:
             if task.limits.gpus_offset is None:
                 task.limits.gpus_offset = 0
-            gpus = ','.join([
-                str(c % task.limits.gpus) for c in range(
+            gpus = [
+                c % task.limits.gpus for c in range(
                     task.limits.gpus_offset,
                     task.limits.gpus_offset + task.limits.gpus
                 )
-            ])
-            docker_call += [ '--runtime=nvidia', '--shm-size=1g', '-e', f'NVIDIA_VISIBLE_DEVICES={gpus}' ]
+            ]
+            gpus_list = ','.join(map(str, gpus))
+            docker_call += [ '--runtime=nvidia', '--shm-size=1g', '-e', f'NVIDIA_VISIBLE_DEVICES={gpus_list}' ]
         if task.limits.memory is not None:
             docker_call += [ '--memory', str(task.limits.memory) ]
             if task.limits.swap is not None:
@@ -177,13 +178,14 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
             docker_call += [ '--verbose' ]
         docker_call += [ os.path.join(WORKER_DIRECTORY, 'task') ]
         docker_call += [ os.path.join(WORKER_DIRECTORY, 'result') ]
-        logging.debug('Docker call : {}'.format(docker_call))
 
-        docker_gpu_memory_reservation = ['docker', 'run', '--runtime=nvidia', '--rm', '-d', '-e', 'NVIDIA_VISIBLE_DEVICES=0', '--name', 'reserved_', 'gpu-memory-reservation:latest', '/opt/conda/bin/python', '/app/reserve_gpu_memory.py', '1024']
+        docker_gpu_memory_reservation = ['docker', 'run', '--runtime=nvidia', '--rm', '-d', '-e', 'NVIDIA_VISIBLE_DEVICES=0', '--name', f'reserved_{"_".join(map(str, gpus))}', 'gpu-memory-reservation:latest', '/opt/conda/bin/python', '/app/reserve_gpu_memory.py', '1024']
+        logging.debug('Docker call : {}'.format(docker_gpu_memory_reservation))
         docker_cleanup.append([
             'docker', 'stop', 'reserved_'
         ])
 
+        logging.debug('Docker call : {}'.format(docker_call))
         pull_image = config.pull
         if not pull_image:
             docker_inspect_run = subprocess.run(['docker', 'image', 'inspect', docker_image], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
@@ -203,6 +205,13 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         result.limits = task.limits
         result.stdout = task.stdout
         result.stderr = task.stderr
+
+
+        docker_run = subprocess.run(docker_gpu_memory_reservation, stdout=subprocess.PIPE)
+        rid = str(docker_run.stdout, 'utf-8').strip()
+        docker_cleanup += [
+            ['docker', 'stop', rid]
+        ]
 
         start_time = datetime.datetime.now()
         docker_run = subprocess.run(docker_call, stdout=subprocess.PIPE)

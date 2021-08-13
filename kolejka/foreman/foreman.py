@@ -27,6 +27,8 @@ from kolejka.worker.stage0 import stage0
 from kolejka.worker.volume import check_python_volume
 
 def manage_images(pull, size, necessary_images, priority_images):
+    necessary_images['gpu-memory-reservation:latest'] = 11037418240
+    print(necessary_images.items())
     necessary_size = sum(necessary_images.values(), 0)
     free_size = size - necessary_size
     assert free_size >= 0
@@ -123,7 +125,8 @@ def foreman():
                     processes = list()
                     cpus_offset = 0
                     gpus_offset = 0
-                    gpus_memory = {f'{gpu_id}': resources.gpu_memory for gpu_id in limits.gpus}
+                    gpus_memory = {f'{gpu_id}': limits.gpu_memory for gpu_id in range(limits.gpus)}
+                    print(gpus_memory)
                     for task in tasks:
                         if len(processes) >= config.concurency:
                             break
