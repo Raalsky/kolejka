@@ -179,7 +179,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         docker_call += [ os.path.join(WORKER_DIRECTORY, 'task') ]
         docker_call += [ os.path.join(WORKER_DIRECTORY, 'result') ]
 
-        docker_gpu_memory_reservation = ['docker', 'run', '--runtime=nvidia', '--rm', '-d', '-e', 'NVIDIA_VISIBLE_DEVICES=0', '--name', f'reserved_{"_".join(map(str, gpus))}', 'gpu-memory-reservation:latest', '/opt/conda/bin/python', '/app/reserve_gpu_memory.py', '1024']
+        docker_gpu_memory_reservation = ['docker', 'run', '--runtime=nvidia', '--rm', '-d', '-e', 'NVIDIA_VISIBLE_DEVICES=0', '--name', f'reserved_{"_".join(map(str, gpus))}', 'gpu-memory-reservation:latest', 'python3', '/app/reserve_gpu_memory.py', f'{task.limits.gpu_memory // 1024 // 1024}']
         logging.debug('Docker call : {}'.format(docker_gpu_memory_reservation))
         docker_cleanup.append([
             'docker', 'stop', 'reserved_'
@@ -252,6 +252,9 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         result.stats.memory.usage = None
         result.stats.memory.swap = None
 
+        print(jailed_result_path)
+        time.sleep(100)
+
         for dirpath, dirnames, filenames in os.walk(jailed_result_path):
             for filename in filenames:
                 abspath = os.path.join(dirpath, filename)
@@ -263,6 +266,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
                         os.makedirs(os.path.dirname(destpath), exist_ok=True)
                         shutil.move(realpath, destpath)
                         os.chmod(destpath, 0o640)
+                        print(relpath)
                         result.files.add(relpath)
         result.commit()
         os.chmod(result.spec_path, 0o640)

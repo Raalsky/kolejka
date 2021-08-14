@@ -1,6 +1,6 @@
 {
   "id": "gpus",
-  "image":  "nvcr.io/nvidia/pytorch:19.12-py3",
+  "image":  "nvidia/cuda:11.0-base",
   "requires": ["gpus:1"],
   "files": {},
   "args": [
@@ -8,12 +8,12 @@
   ],
   "limits": {
     "gpus": 1,
-    "gpu_memory": "1G",
+    "gpu_memory": "512M",
     "cpus": 1,
     "pids": 1,
     "memory": "64M",
     "storage": "64M",
-    "image": "10G",
+    "image": "1G",
     "workspace": "64M",
     "time": 10
   },

@@ -1,5 +1,6 @@
-FROM nvcr.io/nvidia/pytorch:19.12-py3
+FROM nvidia/cuda:11.0-base
 
-RUN /usr/bin/env conda install -y numba==0.53.1
+RUN apt-get update && apt install -y python3 python3-pip
+RUN pip3 install -q numba==0.53.1
 
 COPY ./reserve_gpu_memory.py /app/
