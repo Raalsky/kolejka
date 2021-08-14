@@ -10,7 +10,7 @@
     "gpus": 1,
     "gpu_memory": "512M",
     "cpus": 1,
-    "pids": 1,
+    "pids": 64,
     "memory": "64M",
     "storage": "64M",
     "image": "1G",

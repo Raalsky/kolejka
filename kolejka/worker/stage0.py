@@ -64,9 +64,11 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
 
     docker_task = 'kolejka_worker_{}'.format(task.id)
 
+    docker_before_run = []
+
     docker_cleanup  = [
         [ 'docker', 'kill', docker_task ],
-        [ 'docker', 'rm', docker_task ],
+        # [ 'docker', 'rm', docker_task ],
     ]
 
     with tempfile.TemporaryDirectory(dir=temp_path) as jailed_path:
@@ -129,7 +131,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         logging.debug(f'TESTING {task.limits.dump()} {task.limits.gpus} {task.limits.gpus_offset}')
         if task.limits.cpus is not None:
             docker_call += [ '--cpuset-cpus', ','.join([str(c) for c in cgs.limited_cpuset(cgs.full_cpuset(), task.limits.cpus, task.limits.cpus_offset)]) ]
-        if task.limits.gpus is not None:
+        if task.limits.gpus is not None and task.limits.gpus > 0:
             if task.limits.gpus_offset is None:
                 task.limits.gpus_offset = 0
             gpus = [
@@ -140,6 +142,20 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
             ]
             gpus_list = ','.join(map(str, gpus))
             docker_call += [ '--runtime=nvidia', '--shm-size=1g', '-e', f'NVIDIA_VISIBLE_DEVICES={gpus_list}' ]
+            if task.limits.gpu_memory is not None and task.limits.gpu_memory > 0:
+                docker_gpu_memory_reservation = ['docker', 'run', '--runtime=nvidia', '--rm', '-d', '-e',
+                                                 'NVIDIA_VISIBLE_DEVICES=0', '--name',
+                                                 f'gpu_mem_preserve_{task.id}', 'gpu-memory-reservation:latest',
+                                                 'python3', '/app/reserve_gpu_memory.py',
+                                                 f'{task.limits.gpu_memory // 1024 // 1024}']
+                logging.debug('Docker call : {}'.format(docker_gpu_memory_reservation))
+                docker_before_run += [
+                    docker_gpu_memory_reservation
+                ]
+                docker_cleanup += [
+                    ['docker', 'stop', f'gpu_mem_preserve_{task.id}'],
+                ]
+
         if task.limits.memory is not None:
             docker_call += [ '--memory', str(task.limits.memory) ]
             if task.limits.swap is not None:
@@ -179,12 +195,6 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         docker_call += [ os.path.join(WORKER_DIRECTORY, 'task') ]
         docker_call += [ os.path.join(WORKER_DIRECTORY, 'result') ]
 
-        docker_gpu_memory_reservation = ['docker', 'run', '--runtime=nvidia', '--rm', '-d', '-e', 'NVIDIA_VISIBLE_DEVICES=0', '--name', f'reserved_{"_".join(map(str, gpus))}', 'gpu-memory-reservation:latest', 'python3', '/app/reserve_gpu_memory.py', f'{task.limits.gpu_memory // 1024 // 1024}']
-        logging.debug('Docker call : {}'.format(docker_gpu_memory_reservation))
-        docker_cleanup.append([
-            'docker', 'stop', 'reserved_'
-        ])
-
         logging.debug('Docker call : {}'.format(docker_call))
         pull_image = config.pull
         if not pull_image:
@@ -206,12 +216,8 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         result.stdout = task.stdout
         result.stderr = task.stderr
 
-
-        docker_run = subprocess.run(docker_gpu_memory_reservation, stdout=subprocess.PIPE)
-        rid = str(docker_run.stdout, 'utf-8').strip()
-        docker_cleanup += [
-            ['docker', 'stop', rid]
-        ]
+        for docker_before in docker_before_run:
+            silent_call(docker_before)
 
         start_time = datetime.datetime.now()
         docker_run = subprocess.run(docker_call, stdout=subprocess.PIPE)
@@ -225,6 +231,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
             except:
                 break
             try:
+                print('CGS', cgs.name_stats(cid).dump())
                 result.stats.update(cgs.name_stats(cid))
             except:
                 pass
@@ -238,9 +245,11 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
                 break
             if task.limits.time is not None and datetime.datetime.now() - start_time > task.limits.time + datetime.timedelta(seconds=2):
                 docker_kill_run = subprocess.run([ 'docker', 'kill', docker_task ])
-        subprocess.run(['docker', 'logs', cid], stdout=subprocess.PIPE)
+        logs = subprocess.run(['docker', 'logs', cid], stdout=subprocess.PIPE)
+        print(str(logs.stdout, 'utf-8').strip())
         try:
             summary = KolejkaResult(jailed_result_path)
+            print(summary.dump())
             result.stats.update(summary.stats)
         except:
             pass
@@ -252,8 +261,10 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         result.stats.memory.usage = None
         result.stats.memory.swap = None
 
+        print("DUMP FROM STAGE0", result.stats.dump())
+
         print(jailed_result_path)
-        time.sleep(100)
+        # time.sleep(100)
 
         for dirpath, dirnames, filenames in os.walk(jailed_result_path):
             for filename in filenames:

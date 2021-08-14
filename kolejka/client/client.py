@@ -416,7 +416,7 @@ def config_parser_execute(parser):
         client = KolejkaClient()
         task = KolejkaTask(args.task)
         response = client.task_put(task)
-        while True:
+        while False:
             client.session.close()
             time.sleep(args.interval)
             try:
