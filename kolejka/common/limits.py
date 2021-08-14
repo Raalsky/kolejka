@@ -25,6 +25,10 @@ def sum_none(*args):
     if len(args) > 0:
         return args[0]
 
+def first_none(*args):
+    args = [ a for a in args if a is not None ]
+    return args[0] if len(args) > 0 else None
+
 class KolejkaLimits:
     def __init__(self, **kwargs):
         self.load(kwargs)
@@ -182,6 +186,33 @@ class KolejkaStats:
             self.max_usage = max_none(self.max_usage, other.max_usage, self.usage)
             self.failures = max_none(self.failures, other.failures)
 
+    class GpuStats:
+        def __init__(self, **kwargs):
+            self.load(kwargs)
+        def load(self, data, **kwargs):
+            args = json_dict_load(data)
+            args.update(kwargs)
+            self.name = args.get('name', None)
+            self.total_memory = parse_memory(args.get('total_memory', None))
+            self.free_memory = parse_memory(args.get('free_memory', None))
+            self.available_memory = parse_memory(args.get('available_memory', None))
+        def dump(self):
+            res = dict()
+            if self.name is not None:
+                res['name'] = self.name
+            if self.total_memory is not None:
+                res['total_memory'] = unparse_memory(self.total_memory)
+            if self.free_memory is not None:
+                res['free_memory'] = unparse_memory(self.free_memory)
+            if self.available_memory is not None:
+                res['available_memory'] = unparse_memory(self.available_memory)
+            return res
+        def update(self, other):
+            self.name = first_none(self.name, other.name)
+            self.total_memory = min_none(self.total_memory, other.total_memory)
+            self.free_memory = min_none(self.free_memory, other.free_memory)
+            self.available_memory = min_none(self.available_memory, other.available_memory)
+
     def __init__(self, **kwargs):
         self.load(kwargs)
 
@@ -205,6 +236,10 @@ class KolejkaStats:
         self.pids = KolejkaStats.PidsStats()
         self.pids.load(args.get('pids', {}))
         self.time = parse_time(args.get('time', None))
+        self.gpus = dict()
+        for key, val in args.get('gpus', {}).items():
+            self.gpus[key] = KolejkaStats.GpuStats()
+            self.gpus[key].load(val)
 
     def dump(self):
         res = dict()
@@ -214,6 +249,7 @@ class KolejkaStats:
         res['pids'] = self.pids.dump()
         if self.time is not None:
             res['time'] = unparse_time(self.time)
+        res['gpus'] = dict([(k, v.dump()) for k, v in self.gpus.items()])
         return res
 
     def update(self, other):
@@ -230,3 +266,7 @@ class KolejkaStats:
         self.memory.update(other.memory)
         self.pids.update(other.pids)
         self.time = max_none(self.time, other.time)
+        for k,v in other.gpus.items():
+            if k not in self.gpus:
+                self.gpus[k] = KolejkaStats.GpuStats()
+            self.gpus[k].update(v)

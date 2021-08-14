@@ -20,6 +20,7 @@ from kolejka.common import kolejka_config, worker_config
 from kolejka.common import KolejkaTask, KolejkaResult, KolejkaLimits
 from kolejka.common import ControlGroupSystem
 from kolejka.common import MemoryAction, TimeAction
+from kolejka.common.gpus import gpu_stats
 from kolejka.worker.volume import check_python_volume
 
 def silent_call(*args, **kwargs):
@@ -219,6 +220,9 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         for docker_before in docker_before_run:
             silent_call(docker_before)
 
+        time.sleep(0.1)
+        result.stats.update(gpu_stats())
+
         start_time = datetime.datetime.now()
         docker_run = subprocess.run(docker_call, stdout=subprocess.PIPE)
         cid = str(docker_run.stdout, 'utf-8').strip()
@@ -233,6 +237,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
             try:
                 print('CGS', cgs.name_stats(cid).dump())
                 result.stats.update(cgs.name_stats(cid))
+                result.stats.update(gpu_stats())
             except:
                 pass
             time.sleep(0.1)
@@ -264,7 +269,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         print("DUMP FROM STAGE0", result.stats.dump())
 
         print(jailed_result_path)
-        # time.sleep(100)
+        time.sleep(200)
 
         for dirpath, dirnames, filenames in os.walk(jailed_result_path):
             for filename in filenames:
