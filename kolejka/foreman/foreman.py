@@ -191,8 +191,8 @@ def foreman():
                                 break
                         else:
                             break
-                    if config.image is not None:
-                        manage_images(config.pull, config.image, image_usage, [task.image for task in tasks])
+                    # if config.image is not None:
+                    #     manage_images(config.pull, config.image, image_usage, [task.image for task in tasks])
                     for proc in processes:
                         proc.start()
                     for proc in processes:

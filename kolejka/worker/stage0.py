@@ -269,7 +269,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         print("DUMP FROM STAGE0", result.stats.dump())
 
         print(jailed_result_path)
-        time.sleep(200)
+        # time.sleep(200)
 
         for dirpath, dirnames, filenames in os.walk(jailed_result_path):
             for filename in filenames:

@@ -1,0 +1,33 @@
+{
+  "id": "gpus",
+  "image":  "gpu-memory-reservation:latest",
+  "requires": ["gpus:1"],
+  "files": {
+    "test.sh" : {
+        "path" : "test.sh"
+    },
+    "sample.py" : {
+        "path" : "sample.py"
+    }
+  },
+  "args": [
+      "./test.sh"
+  ],
+  "environment": {
+    "NUMBAPRO_LIBDEVICE": "/usr/local/cuda/nvvm/libdevice",
+    "NUMBAPRO_NVVM": "/usr/local/cuda/nvvm/lib64/libnvvm.so"
+  },
+  "limits": {
+    "gpus": 1,
+    "gpu_memory": "1G",
+    "cpus": 1,
+    "pids": 64,
+    "memory": "2G",
+    "storage": "64M",
+    "image": "4G",
+    "workspace": "64M",
+    "time": 100
+  },
+  "stderr": "stderr.txt",
+  "stdout": "stdout.txt"
+}
