@@ -71,6 +71,7 @@ def dequeue(request):
                 continue
             image_usage_add = max(image_usage.get(tt.image, 0), tt.limits.image) - image_usage.get(tt.image, 0)
             if image_usage_add > resources.image:
+                print(f"Task need {image_usage_add}, Foreman has {resources.image}")
                 print('Breaked at image B')
                 continue
         if resources.workspace is not None and (tt.limits.workspace is None or tt.limits.workspace > resources.workspace):

@@ -273,6 +273,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
 
         for dirpath, dirnames, filenames in os.walk(jailed_result_path):
             for filename in filenames:
+                print(filename)
                 abspath = os.path.join(dirpath, filename)
                 realpath = os.path.realpath(abspath)
                 if realpath.startswith(os.path.realpath(jailed_result_path)+'/'):

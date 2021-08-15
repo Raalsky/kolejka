@@ -1,33 +1,37 @@
 {
   "id": "gpus",
-  "image":  "gpu-memory-reservation:latest",
+  "image":  "nvcr.io/nvidia/pytorch:21.07-py3",
   "requires": ["gpus:1"],
   "files": {
-    "test.sh" : {
-        "path" : "test.sh"
-    },
     "sample.py" : {
         "path" : "sample.py"
     }
   },
   "args": [
-      "./test.sh"
+      "/usr/local/bin/nv-nsight-cu-cli",
+      "--metrics",
+      "gpu__time_duration.sum",
+      "-c",
+      "1",
+      "/opt/conda/bin/python",
+      "sample.py"
   ],
-  "environment": {
-    "NUMBAPRO_LIBDEVICE": "/usr/local/cuda/nvvm/libdevice",
-    "NUMBAPRO_NVVM": "/usr/local/cuda/nvvm/lib64/libnvvm.so"
-  },
   "limits": {
     "gpus": 1,
-    "gpu_memory": "1G",
-    "cpus": 1,
+    "gpu_memory": "8G",
+    "cpus": 2,
     "pids": 64,
-    "memory": "2G",
-    "storage": "64M",
-    "image": "4G",
-    "workspace": "64M",
-    "time": 100
+    "memory": "8G",
+    "storage": "1G",
+    "image": "25G",
+    "workspace": "1G",
+    "time": 3000
   },
+  "collect": [
+    {
+      "glob": "profile*"
+    }
+  ],
   "stderr": "stderr.txt",
   "stdout": "stdout.txt"
 }
