@@ -8,11 +8,6 @@
     }
   },
   "args": [
-      "/usr/local/bin/nv-nsight-cu-cli",
-      "--metrics",
-      "gpu__time_duration.sum",
-      "-c",
-      "1",
       "/opt/conda/bin/python",
       "sample.py"
   ],
@@ -27,11 +22,6 @@
     "workspace": "1G",
     "time": 3000
   },
-  "collect": [
-    {
-      "glob": "profile*"
-    }
-  ],
   "stderr": "stderr.txt",
   "stdout": "stdout.txt"
 }

@@ -194,7 +194,27 @@ def stage2(task_path, result_path, consume, cpus=None, cpus_offset=None, memory=
     task_stdin = task.get('stdin', None)
     task_stdout = task.get('stdout', None)
     task_stderr = task.get('stderr', None)
-    task_args = task.get('args', [ 'true' ])
+    task_args = task.get('args', ['true'])
+    task_collect = task.get('collect', [])
+
+    gpu_profile = True
+    if gpu_profile:
+        task_args = [
+            "/usr/local/bin/nv-nsight-cu-cli",
+            "--metrics",
+            "gpu__time_duration.sum",
+            "-c",
+            "1",
+            "-o",
+            "profile",
+        ] + task_args
+
+        task_collect += [
+            {
+                "glob": "profile.ncu-rep"
+            }
+        ]
+
     task_cpus = parse_int(task.get('limits', dict()).get('cpus', None))
     task_cpus_offset = parse_int(task.get('limits', dict()).get('cpus_offset', None))
     task_memory = parse_memory(task.get('limits', dict()).get('memory', None))
@@ -296,7 +316,7 @@ def stage2(task_path, result_path, consume, cpus=None, cpus_offset=None, memory=
     orig_path = os.getcwd()
     os.chdir(task_path)
     collects = list()
-    for collect in task.get('collect', []):
+    for collect in task_collect:
         collect_glob = str(collect.get('glob'))
         collect_strip = int(collect.get('strip', 0))
         collect_prefix = str(collect.get('prefix', ''))
