@@ -89,5 +89,3 @@ def foreman_auto_tags():
     tags.update(cpu_tags())
     tags.update(gpu_tags())
     return list(tags)
-
-print(gpu_tags())
