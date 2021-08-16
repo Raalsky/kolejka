@@ -197,6 +197,8 @@ class KolejkaTask():
         self.collect = KolejkaCollect()
         print(args.get('collect'))
         self.collect.load(args.get('collect', []))
+        self.profilers = []
+        self.profilers.load(args.get('profilers', [GpuProfiler()]))
 
     def dump(self):
         res = dict()

@@ -22,6 +22,14 @@
     "workspace": "1G",
     "time": 3000
   },
+  "profilers": {
+    "gpu": {
+      "metrics": [
+        "gpu_duration_time"
+      ],
+      "repeat": 1
+    }
+  },
   "stderr": "stderr.txt",
   "stdout": "stdout.txt"
 }

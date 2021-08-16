@@ -196,6 +196,7 @@ class KolejkaStats:
             self.total_memory = parse_memory(args.get('total_memory', None))
             self.free_memory = parse_memory(args.get('free_memory', None))
             self.available_memory = parse_memory(args.get('available_memory', None))
+            self.usage = args.get('usage', {})
         def dump(self):
             res = dict()
             if self.name is not None:
@@ -206,12 +207,15 @@ class KolejkaStats:
                 res['free_memory'] = unparse_memory(self.free_memory)
             if self.available_memory is not None:
                 res['available_memory'] = unparse_memory(self.available_memory)
+            if self.usage:
+                res['usage'] = self.usage
             return res
         def update(self, other):
             self.name = first_none(self.name, other.name)
             self.total_memory = min_none(self.total_memory, other.total_memory)
             self.free_memory = min_none(self.free_memory, other.free_memory)
             self.available_memory = min_none(self.available_memory, other.available_memory)
+            self.usage.update(other.usage)
 
     def __init__(self, **kwargs):
         self.load(kwargs)

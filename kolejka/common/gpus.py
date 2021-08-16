@@ -2,7 +2,6 @@ import gpustat
 
 from kolejka.common.limits import KolejkaStats
 
-
 def gpu_stats():
     gpu_stat = gpustat.GPUStatCollection.new_query()
 
@@ -19,10 +18,3 @@ def gpu_stats():
     })
 
     return stats
-#
-# with open('metrics.csv', newline='') as csvfile:
-# ...     data = csv.DictReader(csvfile)
-# ...     for row in data:
-# ...             print(row['Metric Name'])
-
-# nv-nsight-cu-cli --import profile.ncu-rep --csv > metrics.csv

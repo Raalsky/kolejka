@@ -286,8 +286,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
                                                  stdout=subprocess.PIPE)
                         w = str(metrics.stdout, 'utf-8').strip()
                         print(w)
-                        import csv
-                        from io import StringIO
+
                         data = csv.DictReader(StringIO(w))
                         for row in data:
                             print(row)

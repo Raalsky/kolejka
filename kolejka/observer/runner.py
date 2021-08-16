@@ -15,10 +15,10 @@ import sys
 from kolejka.common import settings
 from kolejka.common import KolejkaLimits
 from kolejka.common import MemoryAction, TimeAction
-import kolejka.common.subprocess
+import kolejka.common.subprocesses
 from kolejka.observer.client import KolejkaObserverClient
 
-class CompletedProcess(kolejka.common.subprocess.CompletedProcess):
+class CompletedProcess(kolejka.common.subprocesses.CompletedProcess):
     def __init__(self, *args, stats, **kwargs):
         super().__init__(*args, **kwargs)
         self.stats = stats
@@ -26,7 +26,7 @@ class CompletedProcess(kolejka.common.subprocess.CompletedProcess):
     def limits(self):
         return self.starter.limits
 
-class Starter(kolejka.common.subprocess.Starter):
+class Starter(kolejka.common.subprocesses.Starter):
     def __init__(self, *args, limits=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.limits = limits
@@ -71,14 +71,14 @@ class Starter(kolejka.common.subprocess.Starter):
             pass
 
 def start(*args, _Starter=Starter, **kwargs):
-    return kolejka.common.subprocess.start(*args, _Starter=_Starter, **kwargs)
+    return kolejka.common.subprocesses.start(*args, _Starter=_Starter, **kwargs)
 
 def wait(process, input=None, timeout=None, check=False):
-    result = kolejka.common.subprocess.wait(process, input=input, timeout=timeout, check=check)
+    result = kolejka.common.subprocesses.wait(process, input=input, timeout=timeout, check=check)
     return CompletedProcess(starter=result.starter, returncode=result.returncode, stdout=result.stdout, stderr=result.stderr, time=result.time, stats=result.starter.client.stats())
 
 def run(*args, _Starter=Starter, **kwargs):
-    result = kolejka.common.subprocess.run(*args, _Starter=_Starter, **kwargs)
+    result = kolejka.common.subprocesses.run(*args, _Starter=_Starter, **kwargs)
     return CompletedProcess(starter=result.starter, returncode=result.returncode, stdout=result.stdout, stderr=result.stderr, time=result.time, stats=result.starter.client.stats())
 
 def file_reader(path):
