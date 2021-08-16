@@ -20,7 +20,7 @@ from kolejka.common import kolejka_config, worker_config
 from kolejka.common import KolejkaTask, KolejkaResult, KolejkaLimits
 from kolejka.common import ControlGroupSystem
 from kolejka.common import MemoryAction, TimeAction
-from kolejka.common.gpus import gpu_stats
+from kolejka.common.gpu import gpu_stats
 from kolejka.worker.volume import check_python_volume
 
 def silent_call(*args, **kwargs):
@@ -61,15 +61,13 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
     limits.gpus = config.gpus
     task.limits.update(limits)
 
-    logging.debug(task.limits.dump())
-
     docker_task = 'kolejka_worker_{}'.format(task.id)
 
     docker_before_run = []
 
     docker_cleanup  = [
         [ 'docker', 'kill', docker_task ],
-        # [ 'docker', 'rm', docker_task ],
+        [ 'docker', 'rm', docker_task ],
     ]
 
     with tempfile.TemporaryDirectory(dir=temp_path) as jailed_path:
@@ -129,7 +127,6 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
             docker_call += [ '--env', '{}={}'.format(key, val) ]
         docker_call += [ '--hostname', WORKER_HOSTNAME ]
         docker_call += [ '--init' ]
-        logging.debug(f'TESTING {task.limits.dump()} {task.limits.gpus} {task.limits.gpus_offset}')
         if task.limits.cpus is not None:
             docker_call += [ '--cpuset-cpus', ','.join([str(c) for c in cgs.limited_cpuset(cgs.full_cpuset(), task.limits.cpus, task.limits.cpus_offset)]) ]
         if task.limits.gpus is not None and task.limits.gpus > 0:
@@ -235,7 +232,6 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
             except:
                 break
             try:
-                print('CGS', cgs.name_stats(cid).dump())
                 result.stats.update(cgs.name_stats(cid))
                 result.stats.update(gpu_stats())
             except:
@@ -250,11 +246,9 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
                 break
             if task.limits.time is not None and datetime.datetime.now() - start_time > task.limits.time + datetime.timedelta(seconds=2):
                 docker_kill_run = subprocess.run([ 'docker', 'kill', docker_task ])
-        logs = subprocess.run(['docker', 'logs', cid], stdout=subprocess.PIPE)
-        print(str(logs.stdout, 'utf-8').strip())
+        subprocess.run(['docker', 'logs', cid], stdout=subprocess.PIPE)
         try:
             summary = KolejkaResult(jailed_result_path)
-            print(summary.dump())
             result.stats.update(summary.stats)
         except:
             pass
@@ -266,17 +260,10 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         result.stats.memory.usage = None
         result.stats.memory.swap = None
 
-        print("DUMP FROM STAGE0", result.stats.dump())
-
-        print(jailed_result_path)
-        # time.sleep(200)
-
         for dirpath, dirnames, filenames in os.walk(jailed_result_path):
             for filename in filenames:
-                print(filename)
                 abspath = os.path.join(dirpath, filename)
                 realpath = os.path.realpath(abspath)
-
                 if realpath.startswith(os.path.realpath(jailed_result_path)+'/'):
                     relpath = abspath[len(jailed_result_path)+1:]
 
@@ -298,9 +285,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
                         os.makedirs(os.path.dirname(destpath), exist_ok=True)
                         shutil.move(realpath, destpath)
                         os.chmod(destpath, 0o640)
-                        print(relpath)
                         result.files.add(relpath)
-
         result.commit()
         os.chmod(result.spec_path, 0o640)
 
