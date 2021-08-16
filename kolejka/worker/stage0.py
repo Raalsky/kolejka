@@ -66,7 +66,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
 
     docker_cleanup  = [
         [ 'docker', 'kill', docker_task ],
-        # [ 'docker', 'rm', docker_task ],
+        [ 'docker', 'rm', docker_task ],
     ]
 
     with tempfile.TemporaryDirectory(dir=temp_path) as jailed_path:
@@ -228,7 +228,6 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
             except:
                 break
             try:
-                print('CGS', cgs.name_stats(cid).dump())
                 result.stats.update(cgs.name_stats(cid))
             except:
                 pass
@@ -242,11 +241,9 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
                 break
             if task.limits.time is not None and datetime.datetime.now() - start_time > task.limits.time + datetime.timedelta(seconds=2):
                 docker_kill_run = subprocess.run([ 'docker', 'kill', docker_task ])
-        logs = subprocess.run(['docker', 'logs', cid], stdout=subprocess.PIPE)
-        print(str(logs.stdout, 'utf-8').strip())
+        subprocess.run(['docker', 'logs', cid], stdout=subprocess.PIPE)
         try:
             summary = KolejkaResult(jailed_result_path)
-            print(summary.dump())
             result.stats.update(summary.stats)
         except:
             pass
@@ -257,11 +254,6 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         result.stats.pids.usage = None
         result.stats.memory.usage = None
         result.stats.memory.swap = None
-
-        print("DUMP FROM STAGE0", result.stats.dump())
-
-        print(jailed_result_path)
-        # time.sleep(100)
 
         for dirpath, dirnames, filenames in os.walk(jailed_result_path):
             for filename in filenames:
@@ -274,7 +266,6 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
                         os.makedirs(os.path.dirname(destpath), exist_ok=True)
                         shutil.move(realpath, destpath)
                         os.chmod(destpath, 0o640)
-                        print(relpath)
                         result.files.add(relpath)
         result.commit()
         os.chmod(result.spec_path, 0o640)

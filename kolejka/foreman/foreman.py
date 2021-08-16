@@ -28,9 +28,7 @@ from kolejka.worker.volume import check_python_volume
 
 def manage_images(pull, size, necessary_images, priority_images):
     necessary_images['gpu-memory-reservation:latest'] = 1073741824
-    print('IMAGES', necessary_images.items())
     necessary_size = sum(necessary_images.values(), 0)
-    print(size, necessary_size)
     free_size = size - necessary_size
     assert free_size >= 0
     docker_images = dict([(a.split()[0], parse_memory(a.split()[1]))  for a in str(subprocess.run(['docker', 'image', 'ls', '--format', '{{.Repository}}:{{.Tag}} {{.Size}}'], stdout=subprocess.PIPE, check=True).stdout, 'utf-8').split('\n') if a])
@@ -126,7 +124,6 @@ def foreman():
                     cpus_offset = 0
                     gpus_offset = 0
                     gpus_memory = {f'{gpu_id}': limits.gpu_memory for gpu_id in range(limits.gpus)}
-                    print(gpus_memory)
                     for task in tasks:
                         if len(processes) >= config.concurency:
                             break
