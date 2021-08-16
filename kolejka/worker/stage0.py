@@ -20,6 +20,7 @@ from kolejka.common import kolejka_config, worker_config
 from kolejka.common import KolejkaTask, KolejkaResult, KolejkaLimits
 from kolejka.common import ControlGroupSystem
 from kolejka.common import MemoryAction, TimeAction
+from kolejka.common import gpu
 from kolejka.worker.volume import check_python_volume
 
 def silent_call(*args, **kwargs):
@@ -29,7 +30,7 @@ def silent_call(*args, **kwargs):
     return subprocess.run(*args, **kwargs)
 
 def check_gpu_runtime_availability():
-    return shutil.which('nvidia-container-runtime')
+    assert shutil.which('nvidia-container-runtime') is not None, "nvidia-docker is required for GPUs capabilities"
 
 def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
     config = worker_config()
@@ -126,16 +127,12 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         docker_call += [ '--init' ]
         if task.limits.cpus is not None:
             docker_call += [ '--cpuset-cpus', ','.join([str(c) for c in cgs.limited_cpuset(cgs.full_cpuset(), task.limits.cpus, task.limits.cpus_offset)]) ]
+
         if task.limits.gpus is not None:
-            if task.limits.gpus_offset is None:
-                task.limits.gpus_offset = 0
-            gpus = ','.join([
-                str(c % task.limits.gpus) for c in range(
-                    task.limits.gpus_offset,
-                    task.limits.gpus_offset + task.limits.gpus
-                )
-            ])
-            docker_call += [ '--runtime=nvidia', '--shm-size=1g', '-e', f'NVIDIA_VISIBLE_DEVICES={gpus}' ]
+            check_gpu_runtime_availability()
+            gpus = ','.join(gpu.limited_gpuset(gpu.full_gpuset(), task.limits.gpus, task.limits.gpus_offset))
+            docker_call += [ '--runtime=nvidia', '--shm-size=1g', '--gpus', f'\'"device={gpus}"\'' ]
+
         if task.limits.memory is not None:
             docker_call += [ '--memory', str(task.limits.memory) ]
             if task.limits.swap is not None:
