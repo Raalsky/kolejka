@@ -1,5 +1,6 @@
 import io
 import csv
+import shutil
 import subprocess
 
 from kolejka.common.parse import parse_int, json_dict_load, json_list_load
@@ -39,16 +40,20 @@ class KolejkaProfilers:
                 "-o", "profile",
             ]
 
+        def get_nsight_cli(self):
+            path = shutil.which('nv-nsight-cu-cli')
+            assert path is not None, "Profiler could not import results without nv-nsight-cu-cli"
+            return path
+
         def stats(self, files):
             profile_file = files.get("profile.ncu-rep")
 
             metrics = subprocess.run(
                 [
-                    "/usr/local/cuda-10.1/bin/nv-nsight-cu-cli",
+                    self.get_nsight_cli(),
                     "--import", profile_file,
                     "--csv",
                 ],
-                # ["/usr/local/bin/nv-nsight-cu-cli", "--import", profile_file, "--csv"],
                 stdout=subprocess.PIPE
             )
 

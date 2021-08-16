@@ -64,7 +64,6 @@ def cpu_tags():
     return tags
 
 def normalize_gpu_name(name: str) -> str:
-    print(name)
     return '-'.join(name.lower().split(' ')[1:])
 
 def gpu_tags():
@@ -89,7 +88,6 @@ def gpu_tags():
     return tags
 
 def foreman_auto_tags():
-    print('TTTT')
     tags = set()
     tags.update(cpu_tags())
     tags.update(gpu_tags())
