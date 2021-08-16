@@ -219,10 +219,8 @@ class KolejkaStats:
     def load(self, data, **kwargs):
         args = json_dict_load(data)
         args.update(kwargs)
-        print("ARGS", args)
         self.cpu = KolejkaStats.CpusStats()
         self.cpu.load(args.get('cpu', {}))
-        print("CPU", self.cpu.dump())
         self.cpus = dict()
         for key, val in args.get('cpus', {}).items():
             self.cpus[key] = KolejkaStats.CpusStats()
@@ -253,7 +251,6 @@ class KolejkaStats:
         return res
 
     def update(self, other):
-        print("UPDATE", other.dump())
         self.cpu.update(other.cpu)
         for k,v in other.cpus.items():
             if k not in self.cpus:

@@ -266,7 +266,6 @@ class KolejkaClient:
         if not self.instance_session:
             self.login() 
         response = self.post('/queue/dequeue/', data=json.dumps({'concurency' : concurency, 'limits' : limits.dump(), 'tags' : tags}))
-        logging.debug(f'{response.json()}')
         ts = response.json()['tasks']
         tasks = list()
         for t in ts:
@@ -416,7 +415,7 @@ def config_parser_execute(parser):
         client = KolejkaClient()
         task = KolejkaTask(args.task)
         response = client.task_put(task)
-        while False:
+        while True:
             client.session.close()
             time.sleep(args.interval)
             try:
