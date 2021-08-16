@@ -137,11 +137,14 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
             docker_call += [ '--runtime=nvidia', '--shm-size=1g', '--gpus', f'\'"device={gpus_str}"\'' ]
 
             if task.limits.gpu_memory is not None and task.limits.gpu_memory > 0:
-                gpu_memory_reservation = ['docker', 'run', '--runtime=nvidia', '--rm', '-d', '-e',
-                                                 'NVIDIA_VISIBLE_DEVICES=0', '--name',
-                                                 f'gpu_mem_preserve_{task.id}', 'gpu-memory-reservation:latest',
-                                                 'python3', '/app/reserve_gpu_memory.py',
-                                                 f'{task.limits.gpu_memory // 1024 // 1024}']
+                gpu_memory_reservation = [
+                    'docker', 'run', '--runtime=nvidia', '--rm', '-d', '-e',
+                    '--gpus', f'\'"device={gpus_str}"\'',
+                    '--name', f'gpu_mem_preserve_{task.id}',
+                    'gpu-memory-reservation:latest',
+                    'python3', '/app/reserve_gpu_memory.py',
+                    f'{task.limits.gpu_memory // 1024 // 1024}'
+                ]
                 logging.debug('Docker call : {}'.format(gpu_memory_reservation))
                 before_run += [
                     gpu_memory_reservation
