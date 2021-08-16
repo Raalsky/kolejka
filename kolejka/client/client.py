@@ -266,7 +266,6 @@ class KolejkaClient:
         if not self.instance_session:
             self.login() 
         response = self.post('/queue/dequeue/', data=json.dumps({'concurency' : concurency, 'limits' : limits.dump(), 'tags' : tags}))
-        logging.debug(f'{response.json()}')
         ts = response.json()['tasks']
         tasks = list()
         for t in ts:

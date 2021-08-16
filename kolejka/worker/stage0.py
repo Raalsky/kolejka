@@ -60,8 +60,6 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
     limits.gpus = config.gpus
     task.limits.update(limits)
 
-    logging.debug(task.limits.dump())
-
     docker_task = 'kolejka_worker_{}'.format(task.id)
 
     docker_before_run = []
@@ -128,7 +126,6 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
             docker_call += [ '--env', '{}={}'.format(key, val) ]
         docker_call += [ '--hostname', WORKER_HOSTNAME ]
         docker_call += [ '--init' ]
-        logging.debug(f'TESTING {task.limits.dump()} {task.limits.gpus} {task.limits.gpus_offset}')
         if task.limits.cpus is not None:
             docker_call += [ '--cpuset-cpus', ','.join([str(c) for c in cgs.limited_cpuset(cgs.full_cpuset(), task.limits.cpus, task.limits.cpus_offset)]) ]
         if task.limits.gpus is not None and task.limits.gpus > 0:
