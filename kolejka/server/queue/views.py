@@ -37,7 +37,6 @@ def dequeue(request):
         if len(tasks) > concurency:
             break
         tt = t.task()
-        print(tt.limits.dump())
         if len(tasks) > 0 and tt.exclusive:
             continue
         if not set(tt.requires).issubset(tags):
