@@ -30,6 +30,7 @@ from kolejka.common.images import (
     list_docker_images,
     remove_docker_image
 )
+from kolejka.common.gpu import full_gpuset
 from kolejka.worker.stage0 import stage0
 from kolejka.worker.volume import check_python_volume
 
@@ -64,7 +65,7 @@ def manage_images(pull, size, necessary_images, priority_images):
     for image,size in necessary_images.items():
         pull_image = pull
         if not pull_image:
-            if check_docker_image_existance(image):
+            if not check_docker_image_existance(image):
                 pull_image = True 
         if pull_image:
             pull_docker_image(image)
@@ -128,7 +129,7 @@ def foreman():
                     processes = list()
                     cpus_offset = 0
                     gpus_offset = 0
-                    gpus_memory = {f'{gpu_id}': limits.gpu_memory for gpu_id in range(limits.gpus)}
+
                     for task in tasks:
                         if len(processes) >= config.concurency:
                             break
@@ -147,10 +148,6 @@ def foreman():
                                 ok = False
                             if resources.gpu_memory is not None and task.limits.gpu_memory > resources.gpu_memory:
                                 ok = False
-                            else:
-                                for gpu_id in range(gpus_offset, gpus_offset + task.limits.gpus):
-                                    if task.limits.gpu_memory > gpus_memory[f'{gpu_id % limits.gpus}']:
-                                        ok = False
                         if resources.swap is not None and task.limits.swap > resources.swap:
                             ok = False
                         if resources.pids is not None and task.limits.pids > resources.pids:
@@ -171,8 +168,6 @@ def foreman():
                                 resources.cpus -= task.limits.cpus
                             gpus_offset += task.limits.gpus
                             if resources.gpus is not None:
-                                for gpu_id in range(gpus_offset, gpus_offset + task.limits.gpus):
-                                    gpus_memory[f'{gpu_id % limits.gpus}'] = 0
                                 resources.gpus -= task.limits.gpus
                             if resources.memory is not None:
                                 resources.memory -= task.limits.memory
