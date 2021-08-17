@@ -23,6 +23,8 @@ class KolejkaProfilers:
                 res['repeat'] = self.repeat
             if self.metrics is not None:
                 res['metrics'] = self.metrics
+            res['collect'] = self.to_collect()
+            res['args'] = self.profiler()
             return res
 
         def to_collect(self):

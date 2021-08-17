@@ -259,6 +259,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         result.stats.memory.usage = None
         result.stats.memory.swap = None
 
+        files = {}
         for dirpath, dirnames, filenames in os.walk(jailed_result_path):
             for filename in filenames:
                 abspath = os.path.join(dirpath, filename)
@@ -266,25 +267,17 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
                 if realpath.startswith(os.path.realpath(jailed_result_path)+'/'):
                     relpath = abspath[len(jailed_result_path)+1:]
 
-                    profiler = True
-                    if profiler and relpath == 'profile.ncu-rep':
-                        metrics = subprocess.run(["/usr/local/bin/nv-nsight-cu-cli", "--import", realpath, "--csv"],
-                                                 stdout=subprocess.PIPE)
-                        w = str(metrics.stdout, 'utf-8').strip()
-                        print(w)
-
-                        data = csv.DictReader(StringIO(w))
-                        for row in data:
-                            print(row)
-                            print(row['Metric Name'])
-                        # result.stats.update(gpu_stats())
-
                     if relpath != RESULT_SPEC:
                         destpath = os.path.join(result.path, relpath)
                         os.makedirs(os.path.dirname(destpath), exist_ok=True)
                         shutil.move(realpath, destpath)
                         os.chmod(destpath, 0o640)
                         result.files.add(relpath)
+                        files[filename] = destpath
+
+        for profiler in task.profilers:
+            result.stats.update(profiler.stats(files))
+
         result.commit()
         os.chmod(result.spec_path, 0o640)
 

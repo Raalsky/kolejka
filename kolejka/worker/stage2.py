@@ -196,24 +196,11 @@ def stage2(task_path, result_path, consume, cpus=None, cpus_offset=None, memory=
     task_stderr = task.get('stderr', None)
     task_args = task.get('args', ['true'])
     task_collect = task.get('collect', [])
+    task_profilers = task.get('profilers', [])
 
-    gpu_profile = True
-    if gpu_profile:
-        task_args = [
-            "/usr/local/bin/nv-nsight-cu-cli",
-            "--metrics",
-            "gpu__time_duration.sum",
-            "-c",
-            "1",
-            "-o",
-            "profile",
-        ] + task_args
-
-        task_collect += [
-            {
-                "glob": "profile.ncu-rep"
-            }
-        ]
+    for profiler_name, profiler_def in task_profilers.items():
+        task_collect += profiler_def.get('collect', [])
+        task_args = profiler_def.get('args', []) + task_args
 
     task_cpus = parse_int(task.get('limits', dict()).get('cpus', None))
     task_cpus_offset = parse_int(task.get('limits', dict()).get('cpus_offset', None))

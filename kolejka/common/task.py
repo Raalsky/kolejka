@@ -9,6 +9,7 @@ from .settings import TASK_SPEC, RESULT_SPEC
 from .parse import parse_int, parse_str, parse_bool
 from .parse import json_dict_load, json_list_load
 from .limits import KolejkaLimits, KolejkaStats
+from .profilers import KolejkaProfilers
 
 class KolejkaCollect:
     class Collect:
@@ -194,8 +195,8 @@ class KolejkaTask():
         self.files.load(args.get('files', {}))
         self.collect = KolejkaCollect()
         self.collect.load(args.get('collect', []))
-        self.profilers = []
-        self.profilers.load(args.get('profilers', [GpuProfiler()]))
+        self.profilers = KolejkaProfilers()
+        self.profilers.load(args.get('profilers', {}))
 
     def dump(self):
         res = dict()
@@ -217,6 +218,7 @@ class KolejkaTask():
             res['stderr'] = self.stderr
         res['files'] = self.files.dump()
         res['collect'] = self.collect.dump()
+        res['profilers'] = self.profilers.dump()
         return res
     
     def commit(self):
