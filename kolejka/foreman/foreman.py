@@ -28,14 +28,13 @@ from kolejka.common.images import (
     get_docker_image_size,
     check_docker_image_existance,
     list_docker_images,
-    remove_docker_image
+    remove_docker_image,
+    docker_build_local_image
 )
-from kolejka.common.gpu import full_gpuset
 from kolejka.worker.stage0 import stage0
 from kolejka.worker.volume import check_python_volume
 
-def manage_images(pull, size, necessary_images, priority_images):
-    necessary_images['gpu-memory-reservation:latest'] = 1073741824
+def manage_images(pull, size, necessary_images, priority_images, base_images):
     necessary_size = sum(necessary_images.values(), 0)
     free_size = size - necessary_size
     assert free_size >= 0
@@ -59,6 +58,7 @@ def manage_images(pull, size, necessary_images, priority_images):
         if size <= free_size:
             free_size -= size
             keep_images.add(image)
+    keep_images.update(base_images)
     for image in docker_images:
         if image not in keep_images:
             remove_docker_image(image)
@@ -115,6 +115,7 @@ def foreman():
     limits.gpus = config.gpus
     limits.gpu_memory = config.gpu_memory
     client = KolejkaClient()
+    base_images = set()
     while True:
         try:
             tasks = client.dequeue(config.concurency, limits, config.tags)
@@ -169,6 +170,10 @@ def foreman():
                             gpus_offset += task.limits.gpus
                             if resources.gpus is not None:
                                 resources.gpus -= task.limits.gpus
+                                if task.limits.gpu_memory is not None and task.limits.gpu_memory > 0:
+                                    if not check_docker_image_existance('gpu-memory-reservation:latest'):
+                                        docker_build_local_image('gpu-memory-reservation')
+                                    base_images.add('gpu-memory-reservation')
                             if resources.memory is not None:
                                 resources.memory -= task.limits.memory
                             if resources.swap is not None:
@@ -188,7 +193,13 @@ def foreman():
                         else:
                             break
                     if config.image is not None:
-                        manage_images(config.pull, config.image, image_usage, [task.image for task in tasks])
+                        manage_images(
+                            config.pull,
+                            config.image,
+                            image_usage,
+                            [task.image for task in tasks],
+                            base_images
+                        )
                     for proc in processes:
                         proc.start()
                     for proc in processes:
