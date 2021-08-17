@@ -55,8 +55,6 @@ class KolejkaCollect:
 
     def load(self, data):
         self.collect = list()
-        print(data)
-        print("LIST", json_list_load(data))
         for c in json_list_load(data):
             cc = KolejkaCollect.Collect()
             cc.load(c)
@@ -195,7 +193,6 @@ class KolejkaTask():
         self.files = KolejkaFiles(self.path)
         self.files.load(args.get('files', {}))
         self.collect = KolejkaCollect()
-        print(args.get('collect'))
         self.collect.load(args.get('collect', []))
         self.profilers = []
         self.profilers.load(args.get('profilers', [GpuProfiler()]))
