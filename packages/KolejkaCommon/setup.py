@@ -22,6 +22,8 @@ kolejka_common = {
                 'kolejka = kolejka.common:main',
             ],
         },
+        'data_files': [('images', ['kolejka/images/*'])],
+        'include_package_data': 'True'
     }
 
 if __name__ == '__main__':

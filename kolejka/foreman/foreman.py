@@ -23,6 +23,13 @@ from kolejka.common import kolejka_config, foreman_config
 from kolejka.common import KolejkaTask, KolejkaResult, KolejkaLimits
 from kolejka.common import MemoryAction, TimeAction, parse_memory
 from kolejka.client import KolejkaClient
+from kolejka.common.images import (
+    pull_docker_image,
+    get_docker_image_size,
+    check_docker_image_existance,
+    list_docker_images,
+    remove_docker_image
+)
 from kolejka.worker.stage0 import stage0
 from kolejka.worker.volume import check_python_volume
 
@@ -31,7 +38,7 @@ def manage_images(pull, size, necessary_images, priority_images):
     necessary_size = sum(necessary_images.values(), 0)
     free_size = size - necessary_size
     assert free_size >= 0
-    docker_images = dict([(a.split()[0], parse_memory(a.split()[1]))  for a in str(subprocess.run(['docker', 'image', 'ls', '--format', '{{.Repository}}:{{.Tag}} {{.Size}}'], stdout=subprocess.PIPE, check=True).stdout, 'utf-8').split('\n') if a])
+    docker_images = list_docker_images()
     p_images = dict()
     for image in priority_images:
         if image in docker_images:
@@ -53,17 +60,15 @@ def manage_images(pull, size, necessary_images, priority_images):
             keep_images.add(image)
     for image in docker_images:
         if image not in keep_images:
-            subprocess.run(['docker', 'image', 'rm', image])
+            remove_docker_image(image)
     for image,size in necessary_images.items():
         pull_image = pull
         if not pull_image:
-            docker_inspect_run = subprocess.run(['docker', 'image', 'inspect', image], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-            if docker_inspect_run.returncode != 0:
+            if check_docker_image_existance(image):
                 pull_image = True 
         if pull_image:
-            subprocess.run(['docker', 'pull', image], check=True)
-        docker_inspect_run = subprocess.run(['docker', 'image', 'inspect', '--format', '{{json .Size}}', image], stdout=subprocess.PIPE, check=True)
-        image_size = int(json.loads(str(docker_inspect_run.stdout, 'utf-8')))
+            pull_docker_image(image)
+        image_size = get_docker_image_size(image)
         assert image_size <= size
 
 def foreman_single(temp_path, task):
