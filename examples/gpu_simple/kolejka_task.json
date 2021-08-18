@@ -1,7 +1,7 @@
 {
   "id": "gpus",
   "image":  "nvidia/cuda:11.0-base",
-  "requires": ["gpu:nvidia"],
+  "requires": ["gpus:1"],
   "files": {},
   "args": [
       "/usr/bin/nvidia-smi"
