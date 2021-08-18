@@ -5,8 +5,6 @@ from pathlib import Path
 
 from kolejka.common import parse_memory
 
-LOCAL_IMAGES = Path('kolejka/common/images')
-
 def check_docker_image_existance(image: str) -> bool:
     docker_inspect_run = subprocess.run(
         ['docker', 'image', 'inspect', image],
@@ -43,18 +41,3 @@ def list_docker_images():
         (a.split()[0], parse_memory(a.split()[1]))
         for a in ls_output.split('\n') if a
     ])
-
-def docker_build_image(dockerfile_path: Path, name: str, tag: str = 'latest'):
-    subprocess.run(
-        ['docker', 'build', '-t', f'{name}:{tag}', '.'],
-        cwd=dockerfile_path,
-        stdout=subprocess.PIPE,
-        check=True
-    )
-
-def docker_build_local_image(name: str):
-    image_name = name.replace('-', '_')
-    docker_build_image(LOCAL_IMAGES / image_name, name)
-
-def docker_local_images():
-    return os.listdir(LOCAL_IMAGES)
