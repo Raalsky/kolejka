@@ -14,9 +14,12 @@ def gpu_stats():
             f'{index}': {
                 'name': gpu.name,
                 'id': normalize_name(gpu.name),
-                'total_memory': f'{gpu.memory_total * 1024 * 1024}b',
-                'free_memory': f'{gpu.memory_free * 1024 * 1024}b',
-                'available_memory': f'{gpu.memory_available * 1024 * 1024}b'
+                'total_memory': gpu.memory_total * 1024 * 1024,
+                'usage': {
+                    'free_memory': gpu.memory_total * 1024 * 1024 - gpu.memory_free * 1024 * 1024,
+                    'temperature': gpu.temperature,
+                    'utilization': gpu.utilization
+                }
             } for index, gpu in enumerate(query.gpus)
         }
     })
