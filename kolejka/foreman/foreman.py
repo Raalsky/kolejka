@@ -142,6 +142,9 @@ def foreman():
                         ok = True
                         if resources.cpus is not None and task.limits.cpus > resources.cpus:
                             ok = False
+                        if task.limits.gpus is not None and task.limits.gpus > 0:
+                            if resources.gpus is None or task.limits.gpus > resources.gpus:
+                                ok = False
                         if resources.memory is not None and task.limits.memory > resources.memory:
                             ok = False
                         if resources.gpus is not None:
