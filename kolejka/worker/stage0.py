@@ -142,7 +142,6 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
                     '--gpus', f'\'"device={gpus_str}"\'',
                     '--name', f'gpu_mem_preserve_{task.id}',
                     'gpu-memory-reservation:latest',
-                    'python3', '/app/reserve_gpu_memory.py',
                     f'{task.limits.gpu_memory // 1024 // 1024}'
                 ]
                 logging.debug('Docker call : {}'.format(gpu_memory_reservation))
