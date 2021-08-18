@@ -21,7 +21,7 @@ kolejka_common = {
             'console_scripts' : [
                 'kolejka = kolejka.common:main',
             ],
-        }
+        },
     }
 
 if __name__ == '__main__':
