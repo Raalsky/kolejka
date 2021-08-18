@@ -43,8 +43,9 @@ def dequeue(request):
             continue
         if resources.cpus is not None and (tt.limits.cpus is None or tt.limits.cpus > resources.cpus):
             continue
-        if resources.gpus is not None and (tt.limits.gpus is None or tt.limits.gpus > resources.gpus):
-            continue
+        if tt.limits.gpus is not None and tt.limits.gpus > 0:
+            if resources.gpus is not None and (tt.limits.gpus is None or tt.limits.gpus > resources.gpus):
+                continue
         if resources.memory is not None and (tt.limits.memory is None or tt.limits.memory > resources.memory):
             continue
         if resources.gpu_memory is not None and (tt.limits.gpu_memory is None or tt.limits.gpu_memory > resources.gpu_memory):
