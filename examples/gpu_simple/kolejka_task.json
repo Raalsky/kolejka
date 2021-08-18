@@ -1,14 +1,13 @@
 {
   "id": "gpus",
   "image":  "nvidia/cuda:11.0-base",
-  "requires": ["gpus:1"],
+  "requires": ["gpu:nvidia"],
   "files": {},
   "args": [
       "/usr/bin/nvidia-smi"
   ],
   "limits": {
     "gpus": 1,
-    "gpu_memory": "512M",
     "cpus": 1,
     "pids": 64,
     "memory": "64M",
