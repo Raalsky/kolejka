@@ -216,9 +216,6 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         for sub_call in before_run:
             silent_call(sub_call)
 
-        time.sleep(0.1)
-        result.stats.update(gpu_stats())
-
         start_time = datetime.datetime.now()
         docker_run = subprocess.run(docker_call, stdout=subprocess.PIPE)
         cid = str(docker_run.stdout, 'utf-8').strip()
