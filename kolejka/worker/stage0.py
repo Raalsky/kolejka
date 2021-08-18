@@ -130,7 +130,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
         if task.limits.cpus is not None:
             docker_call += [ '--cpuset-cpus', ','.join([str(c) for c in cgs.limited_cpuset(cgs.full_cpuset(), task.limits.cpus, task.limits.cpus_offset)]) ]
 
-        if task.limits.gpus is not None:
+        if task.limits.gpus is not None and task.limits.gpus > 0:
             check_gpu_runtime_availability()
             gpus = limited_gpuset(full_gpuset(), task.limits.gpus, task.limits.gpus_offset)
             gpus_str = ','.join(map(str, gpus))
@@ -142,7 +142,6 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
                     '--gpus', f'\'"device={gpus_str}"\'',
                     '--name', f'gpu_mem_preserve_{task.id}',
                     'gpu-memory-reservation:latest',
-                    'python3', '/app/reserve_gpu_memory.py',
                     f'{task.limits.gpu_memory // 1024 // 1024}'
                 ]
                 logging.debug('Docker call : {}'.format(gpu_memory_reservation))

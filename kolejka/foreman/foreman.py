@@ -142,6 +142,9 @@ def foreman():
                         ok = True
                         if resources.cpus is not None and task.limits.cpus > resources.cpus:
                             ok = False
+                        if task.limits.gpus is not None and task.limits.gpus > 0:
+                            if resources.gpus is None or task.limits.gpus > resources.gpus:
+                                ok = False
                         if resources.memory is not None and task.limits.memory > resources.memory:
                             ok = False
                         if resources.gpus is not None:
@@ -172,7 +175,7 @@ def foreman():
                                 resources.gpus -= task.limits.gpus
                                 if task.limits.gpu_memory is not None and task.limits.gpu_memory > 0:
                                     if not check_docker_image_existance('gpu-memory-reservation:latest'):
-                                        docker_build_local_image('gpu-memory-reservation')
+                                        pull_docker_image('gpu-memory-reservation:latest')
                                     base_images.add('gpu-memory-reservation')
                             if resources.memory is not None:
                                 resources.memory -= task.limits.memory
