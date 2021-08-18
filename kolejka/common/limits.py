@@ -195,7 +195,9 @@ class KolejkaStats:
             self.name = args.get('name', None)
             self.id = args.get('id', None)
             self.total_memory = parse_memory(args.get('total_memory', None))
-            self.usage = args.get('usage', {})
+            self.memory_usage = parse_memory(args.get('memory_usage', None))
+            self.max_temperature = parse_int(args.get('max_temperature', None))
+            self.max_utilization = parse_int(args.get('max_utilization', None))
         def dump(self):
             res = dict()
             if self.name is not None:
@@ -204,45 +206,26 @@ class KolejkaStats:
                 res['id'] = self.id
             if self.total_memory is not None:
                 res['total_memory'] = unparse_memory(self.total_memory)
-            if self.usage is not None:
-                res['usage'] = {}
-                for gpu_id, gpu_usage in self.usage.items():
-                    res['usage'][gpu_id] = {}
-                    if gpu_usage.get('memory') is not None:
-                        res['usage'][gpu_id]['memory'] = gpu_usage.get('memory')
-                    if gpu_usage.get('temperature') is not None:
-                        res['usage'][gpu_id]['temperature'] = gpu_usage.get('temperature')
-                    if gpu_usage.get('utilization') is not None:
-                        res['usage'][gpu_id]['utilization'] = gpu_usage.get('utilization')
+            if self.memory_usage is not None:
+                res['memory_usage'] = unparse_memory(self.memory_usage)
+            if self.max_temperature is not None:
+                res['max_temperature'] = self.max_temperature
+            if self.max_utilization is not None:
+                res['max_utilization'] = self.max_utilization
             return res
         def update(self, other):
             self.name = first_none(self.name, other.name)
             self.id = first_none(self.id, other.id)
             self.total_memory = min_none(self.total_memory, other.total_memory)
-
-            for other_gpu_id, other_gpu_usage in other.usage.items():
-                if other_gpu_id in self.usage:
-                    self.usage[other_gpu_id]['memory'] = max_none(
-                        self.usage[other_gpu_id]['memory'],
-                        other_gpu_usage['memory']
-                    )
-                    self.usage[other_gpu_id]['temperature'] = max_none(
-                        self.usage[other_gpu_id]['temperature'],
-                        other_gpu_usage['temperature']
-                    )
-                    self.usage[other_gpu_id]['utilization'] = max_none(
-                        self.usage[other_gpu_id]['utilization'],
-                        other_gpu_usage['utilization']
-                    )
-                else:
-                    self.usage[other_gpu_id] = other_gpu_usage
+            self.memory_usage = max_none(self.memory_usage, other.memory_usage)
+            self.max_temperature = max_none(self.max_temperature, other.max_temperature)
+            self.max_utilization = max_none(self.max_utilization, other.max_utilization)
 
     def __init__(self, **kwargs):
         self.load(kwargs)
 
     def load(self, data, **kwargs):
         args = json_dict_load(data)
-        print(args)
         args.update(kwargs)
         self.cpu = KolejkaStats.CpusStats()
         self.cpu.load(args.get('cpu', {}))
