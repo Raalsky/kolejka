@@ -100,21 +100,3 @@ class KolejkaProfilers:
 
     def stats(self, files):
         return self.gpu.stats(files)
-
-
-if __name__ == '__main__':
-    profilers = KolejkaProfilers()
-    data = {
-        "gpu": {
-          "metrics": [
-            "gpu__time_duration.sum"
-          ],
-          "repeat": 1
-        }
-    }
-    files = {
-        'profile.ncu-rep': '/home/rjankowski/profile.ncu-rep'
-    }
-    profilers.load(data)
-    print(profilers.dump())
-    print(profilers.stats(files).dump())
