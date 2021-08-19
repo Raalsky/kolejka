@@ -20,7 +20,7 @@ from kolejka.common import kolejka_config, worker_config
 from kolejka.common import KolejkaTask, KolejkaResult, KolejkaLimits
 from kolejka.common import ControlGroupSystem
 from kolejka.common import MemoryAction, TimeAction
-from kolejka.common.gpu import limited_gpuset, full_gpuset
+from kolejka.common.gpu import gpu_stats, limited_gpuset, full_gpuset
 from kolejka.worker.volume import check_python_volume
 
 def silent_call(*args, **kwargs):
@@ -228,6 +228,7 @@ def stage0(task_path, result_path, temp_path=None, consume_task_folder=False):
                 break
             try:
                 result.stats.update(cgs.name_stats(cid))
+                result.stats.update(gpu_stats())
             except:
                 pass
             time.sleep(0.1)
