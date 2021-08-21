@@ -13,7 +13,6 @@
   ],
   "limits": {
     "gpus": 1,
-    "gpu_memory": "2G",
     "cpus": 2,
     "pids": 64,
     "memory": "4G",
