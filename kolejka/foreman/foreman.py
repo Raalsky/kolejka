@@ -28,12 +28,13 @@ from kolejka.common.images import (
     get_docker_image_size,
     check_docker_image_existance,
     list_docker_images,
-    remove_docker_image
+    remove_docker_image,
+    docker_build_local_image
 )
 from kolejka.worker.stage0 import stage0
 from kolejka.worker.volume import check_python_volume
 
-def manage_images(pull, size, necessary_images, priority_images):
+def manage_images(pull, size, necessary_images, priority_images, base_images):
     necessary_size = sum(necessary_images.values(), 0)
     free_size = size - necessary_size
     assert free_size >= 0
@@ -57,6 +58,7 @@ def manage_images(pull, size, necessary_images, priority_images):
         if size <= free_size:
             free_size -= size
             keep_images.add(image)
+    keep_images.update(base_images)
     for image in docker_images:
         if image not in keep_images:
             remove_docker_image(image)
@@ -111,7 +113,9 @@ def foreman():
     limits.time = config.time
     limits.network = config.network
     limits.gpus = config.gpus
+    limits.gpu_memory = config.gpu_memory
     client = KolejkaClient()
+    base_images = set()
     while True:
         try:
             tasks = client.dequeue(config.concurency, limits, config.tags)
@@ -146,6 +150,8 @@ def foreman():
                         if resources.gpus is not None:
                             if task.limits.gpus > resources.gpus:
                                 ok = False
+                            if resources.gpu_memory is not None and task.limits.gpu_memory > resources.gpu_memory:
+                                ok = False
                         if resources.swap is not None and task.limits.swap > resources.swap:
                             ok = False
                         if resources.pids is not None and task.limits.pids > resources.pids:
@@ -167,6 +173,10 @@ def foreman():
                             gpus_offset += task.limits.gpus
                             if resources.gpus is not None:
                                 resources.gpus -= task.limits.gpus
+                                if task.limits.gpu_memory is not None and task.limits.gpu_memory > 0:
+                                    if not check_docker_image_existance('gpu-memory-reservation:latest'):
+                                        pull_docker_image('gpu-memory-reservation:latest')
+                                    base_images.add('gpu-memory-reservation')
                             if resources.memory is not None:
                                 resources.memory -= task.limits.memory
                             if resources.swap is not None:
@@ -190,7 +200,8 @@ def foreman():
                             config.pull,
                             config.image,
                             image_usage,
-                            [task.image for task in tasks]
+                            [task.image for task in tasks],
+                            base_images
                         )
                     for proc in processes:
                         proc.start()
@@ -219,6 +230,7 @@ def config_parser(parser):
     parser.add_argument('--time', action=TimeAction, help='time limit')
     parser.add_argument('--network', type=bool, help='allow netowrking')
     parser.add_argument('--gpus', type=int, help='gpus limit')
+    parser.add_argument('--gpu-memory', type=MemoryAction, help='gpu memory limit')
     def execute(args):
         kolejka_config(args=args)
         foreman()
